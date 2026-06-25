@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Claude 101 ・ 任務手冊</title>
+<style>
+:root{
+  --ink:#161311;--ink-2:#1f1a16;--line:#33291f;
+  --paper:#ece2d0;--paper-dim:#9a8d79;
+  --clay:#d97757;--clay-soft:#e89a80;
+  --gold:#c9a267;--green:#7fa66a;
+  --serif:"Iowan Old Style","Palatino Linotype",Charter,Georgia,"Songti TC","Noto Serif TC",serif;
+  --sans:-apple-system,"PingFang TC","Noto Sans TC","Helvetica Neue",sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--ink);color:var(--paper);font-family:var(--sans);line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(circle at 80% -10%,rgba(217,119,87,.08),transparent 45%);
+  min-height:100vh;}
+.wrap{max-width:820px;margin:0 auto;padding:0 22px}
+
+/* HUD */
+header.hud{position:sticky;top:0;z-index:30;background:rgba(22,19,17,.88);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+.hud-row{display:flex;align-items:center;gap:14px;padding:13px 0}
+.brand{font-family:var(--serif);font-size:18px;letter-spacing:.3px;white-space:nowrap}
+.brand b{color:var(--clay);font-weight:600}
+.bar-wrap{flex:1;height:7px;background:var(--ink-2);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.bar{height:100%;width:0;background:linear-gradient(90deg,var(--clay),var(--gold));transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.xp{font-family:var(--mono);font-size:12.5px;color:var(--gold);white-space:nowrap}
+.lvl{font-family:var(--mono);font-size:11px;color:var(--paper-dim);white-space:nowrap}
+
+/* Hero */
+.hero{padding:64px 0 38px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--clay);margin-bottom:18px}
+h1{font-family:var(--serif);font-size:clamp(38px,8vw,64px);line-height:1.02;font-weight:600;letter-spacing:-1px}
+h1 .sub{display:block;font-size:clamp(15px,2.5vw,19px);font-weight:400;color:var(--paper-dim);
+  font-family:var(--sans);letter-spacing:0;margin-top:16px;line-height:1.6;max-width:540px}
+.hero-meta{display:flex;gap:26px;margin-top:24px;flex-wrap:wrap}
+.hero-meta div{font-family:var(--mono);font-size:12px;color:var(--paper-dim)}
+.hero-meta b{color:var(--paper);font-weight:600}
+.start-btn{margin-top:28px;background:var(--clay);color:#1a120d;border:none;font-family:var(--sans);
+  font-weight:600;font-size:15px;padding:13px 26px;border-radius:10px;cursor:pointer;
+  transition:transform .15s,background .2s}
+.start-btn:hover{background:var(--clay-soft);transform:translateY(-1px)}
+
+/* Chapter / quest */
+.map{padding:38px 0 90px}
+.chapter{margin-bottom:40px}
+.ch-head{display:flex;align-items:baseline;gap:14px;margin-bottom:18px;
+  padding-bottom:10px;border-bottom:1px solid var(--line)}
+.ch-num{font-family:var(--mono);font-size:13px;color:var(--clay)}
+.ch-title{font-family:var(--serif);font-size:24px;font-weight:600}
+.ch-prog{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--paper-dim)}
+
+.quest{border:1px solid var(--line);border-radius:14px;background:var(--ink-2);
+  margin-bottom:14px;overflow:hidden;transition:border-color .2s}
+.quest.done{border-color:rgba(127,166,106,.45)}
+.quest.locked{opacity:.45;pointer-events:none}
+.q-head{display:flex;align-items:center;gap:14px;padding:17px 19px;cursor:pointer;user-select:none}
+.q-dot{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);flex-shrink:0;
+  display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--paper-dim)}
+.quest.done .q-dot{background:var(--green);border-color:var(--green);color:#15110d;font-size:14px}
+.q-name{font-weight:600;font-size:15px;flex:1}
+.q-xp{font-family:var(--mono);font-size:11.5px;color:var(--gold)}
+.q-caret{color:var(--paper-dim);transition:transform .25s;font-size:12px}
+.quest.open .q-caret{transform:rotate(90deg)}
+.q-body{max-height:0;overflow:hidden;transition:max-height .38s ease}
+.quest.open .q-body{max-height:1800px}
+.q-inner{padding:6px 19px 22px;border-top:1px solid var(--line)}
+.q-inner .lead{color:var(--paper-dim);font-size:13.5px;margin:14px 0;line-height:1.75}
+.tag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--clay);border:1px solid var(--line);
+  border-radius:6px;padding:3px 9px;margin:14px 0 4px}
+
+/* Quiz */
+.choices{display:flex;flex-direction:column;gap:9px;margin:14px 0}
+.choice{text-align:left;background:var(--ink);border:1px solid var(--line);color:var(--paper);
+  padding:12px 15px;border-radius:9px;cursor:pointer;font-family:var(--sans);font-size:14px;transition:all .15s}
+.choice:hover{border-color:var(--clay)}
+.choice.correct{border-color:var(--green);background:rgba(127,166,106,.12);color:#b8e0a8}
+.choice.wrong{border-color:#a85a4a;background:rgba(168,90,74,.12);color:#e0a898}
+.feedback{font-size:13.5px;color:var(--paper-dim);margin-top:10px;min-height:1.4em;line-height:1.6}
+
+/* Practice (導流型) */
+.mission-box{background:rgba(217,119,87,.07);border:1px solid rgba(217,119,87,.28);
+  border-radius:10px;padding:16px 18px;margin:14px 0}
+.m-label{font-family:var(--mono);font-size:10.5px;letter-spacing:2px;color:var(--clay);
+  text-transform:uppercase;margin-bottom:8px}
+.mission-box p{font-size:14px;color:var(--paper);line-height:1.7}
+
+/* prompt 預覽 + 編輯 */
+.prompt-section{margin:14px 0}
+.prompt-label{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:var(--paper-dim);
+  text-transform:uppercase;margin-bottom:7px}
+.prompt-template{background:var(--ink);border:1px solid var(--line);border-radius:9px;
+  padding:13px 15px;font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--paper-dim);
+  white-space:pre-wrap;margin-bottom:10px}
+.prompt-template b{color:var(--paper)}
+textarea{width:100%;background:var(--ink);border:1px solid var(--line);border-radius:9px;
+  color:var(--paper);font-family:var(--mono);font-size:13px;padding:13px;
+  resize:vertical;min-height:90px;line-height:1.65}
+textarea:focus{outline:none;border-color:var(--clay)}
+.hint{font-size:12.5px;color:var(--paper-dim);margin:6px 0 12px;line-height:1.6}
+
+/* 導流按鈕 */
+.go-btn{display:inline-flex;align-items:center;gap:9px;background:var(--clay);color:#1a120d;
+  border:none;font-family:var(--sans);font-weight:600;font-size:14px;padding:11px 20px;
+  border-radius:9px;cursor:pointer;text-decoration:none;transition:background .2s,transform .15s;margin-top:2px}
+.go-btn:hover{background:var(--clay-soft);transform:translateY(-1px)}
+.go-btn svg{flex-shrink:0}
+.go-note{font-size:12px;color:var(--paper-dim);margin-top:9px;line-height:1.6}
+
+/* 完成按鈕 */
+.complete-btn{margin-top:18px;width:100%;background:var(--ink);border:1px solid var(--line);
+  color:var(--paper-dim);font-family:var(--sans);font-weight:600;font-size:13.5px;
+  padding:12px;border-radius:9px;cursor:pointer;transition:all .2s}
+.complete-btn:hover{border-color:var(--green);color:var(--green)}
+.quest.done .complete-btn{border-color:rgba(127,166,106,.4);color:var(--green);
+  background:rgba(127,166,106,.07);cursor:default}
+
+/* Trophy */
+.trophy{padding:40px 0 80px;text-align:center;border-top:1px solid var(--line)}
+.trophy h2{font-family:var(--serif);font-size:28px;margin-bottom:10px}
+.trophy p{color:var(--paper-dim);font-size:14px;max-width:480px;margin:0 auto;line-height:1.7}
+.reset{margin-top:28px;background:none;border:none;color:var(--paper-dim);font-family:var(--mono);
+  font-size:12px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.reset:hover{color:var(--clay)}
+
+/* Footer */
+.site-footer{border-top:1px solid var(--line);padding:36px 0 48px;margin-top:0}
+.footer-inner{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.footer-brand{font-family:var(--serif);font-size:16px;letter-spacing:.2px}
+.footer-brand b{color:var(--clay)}
+.footer-links{display:flex;gap:18px;align-items:center}
+.footer-links a{color:var(--paper-dim);font-family:var(--mono);font-size:12px;
+  text-decoration:none;letter-spacing:.5px;transition:color .2s}
+.footer-links a:hover{color:var(--clay)}
+.footer-links span{color:var(--line);font-size:10px}
+.footer-copy{font-family:var(--mono);font-size:11px;color:var(--paper-dim);line-height:1.7}
+.footer-copy a{color:var(--paper-dim);text-decoration:underline;text-underline-offset:3px}
+.footer-copy a:hover{color:var(--clay)}
+.footer-divider{width:32px;height:1px;background:var(--line)}
+
+/* Completion CTA */
+.official-cta{display:inline-flex;align-items:center;gap:9px;margin-top:22px;
+  background:none;border:1px solid var(--clay);color:var(--clay-soft);
+  font-family:var(--sans);font-weight:600;font-size:14px;padding:12px 22px;
+  border-radius:10px;text-decoration:none;transition:all .2s}
+.official-cta:hover{background:rgba(217,119,87,.1);transform:translateY(-1px)}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--clay);color:#1a120d;font-weight:600;padding:11px 22px;border-radius:10px;
+  font-size:14px;opacity:0;transition:all .35s;z-index:50;box-shadow:0 8px 28px rgba(0,0,0,.45)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+</style>
+</head>
+<body>
+
+<header class="hud">
+  <div class="wrap hud-row">
+    <div class="brand">Claude 101 ・ <b>任務手冊</b></div>
+    <div class="bar-wrap"><div class="bar" id="bar"></div></div>
+    <div class="xp" id="xp-label">0 XP</div>
+    <div class="lvl" id="lvl-label">學徒</div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">官方課程 ・ 任務化改裝版</div>
+    <h1>把 Claude 學起來
+      <span class="sub">不是看完十五段影片，而是接十二個任務。每關都動手做、去 Claude 練、回來解鎖下一關。</span>
+    </h1>
+    <div class="hero-meta">
+      <div>關卡 <b>12</b></div>
+      <div>章節 <b>5</b></div>
+      <div>滿級 <b>1200 XP</b></div>
+      <div>需要 <b>claude.ai 帳號</b></div>
+    </div>
+    <button class="start-btn" onclick="document.getElementById('map').scrollIntoView({behavior:'smooth'})">
+      開始第一關 →
+    </button>
+  </section>
+
+  <section class="map" id="map"></section>
+
+  <section class="trophy">
+    <h2 id="trophy-title">完成全部任務即可領取主理人徽章 🏅</h2>
+    <p id="trophy-sub">每一關的練習都在你自己的 Claude 帳號完成——你學到的，真的是你自己操作過的。</p>
+    <div id="official-link-wrap" style="display:none;margin-top:8px">
+      <a class="official-cta" href="https://anthropic.skilljar.com/claude-101" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        前往 Anthropic 官方課程領取正式證書
+      </a>
+      <p style="font-size:12px;color:var(--paper-dim);margin-top:10px">
+        anthropic.skilljar.com/claude-101 ・ 免費註冊・官方英文原版
+      </p>
+    </div>
+    <button class="reset" onclick="resetAll()" style="margin-top:24px">重置所有進度</button>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">超中毒 ・ <b>Claude 101 任務手冊</b></div>
+    <div class="footer-links">
+      <a href="https://www.threads.net/@oiiax88" target="_blank" rel="noopener">Threads @oiiax88</a>
+    </div>
+    <div class="footer-divider"></div>
+    <p class="footer-copy">
+      © 2026 超中毒｜本任務手冊由 <a href="https://www.threads.net/@oiiax88" target="_blank" rel="noopener">@oiiax88</a> 製作，版權所有，未經授權不得轉載或再製。<br>
+      課程內容改編自 <a href="https://anthropic.skilljar.com/claude-101" target="_blank" rel="noopener">Anthropic 官方 Claude 101</a>，僅供個人學習參考。<br>
+      Claude 為 Anthropic PBC 之商標。
+    </p>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// 課程資料
+// type: "quiz"     → 選擇題，當場作答
+// type: "practice" → 組好 prompt 導到 claude.ai
+// ─────────────────────────────────────────────
+const CHAPTERS = [
+  {
+    title:"認識 Claude",
+    quests:[
+      {
+        id:"q01", name:"Claude 是什麼？", xp:80, type:"quiz",
+        concept:"Claude 是 Anthropic 訓練的 AI 助理，能對話、寫作、分析、寫程式、處理檔案。它不是搜尋引擎——它會理解你的意圖、跟你來回討論，直接產出成果。",
+        q:"以下哪句最能說明 Claude 跟搜尋引擎的差別？",
+        opts:[
+          {t:"Claude 只回傳網頁連結讓你自己讀", ok:false, fb:"那是搜尋引擎的行為，Claude 正好相反。"},
+          {t:"Claude 能理解上下文、來回討論、直接產出成果", ok:true, fb:"沒錯。它是協作對象，不是連結清單。"},
+          {t:"Claude 沒辦法處理檔案或寫程式", ok:false, fb:"兩者都能做，後面的關卡會練到。"}
+        ]
+      },
+      {
+        id:"q02", name:"你的第一次對話", xp:80, type:"practice",
+        concept:"開場別把它當 Google。說清楚：你是誰、要做什麼、給誰看、想要什麼形式。資訊越具體，回應越貼近你要的。",
+        mission:"去 Claude 跟它說 Hi，告訴它你在做什麼工作、最近遇到什麼挑戰，看看它怎麼回。",
+        promptTemplate:"我是一位 [你的職位]，目前正在做 [你的工作內容]。\n最近遇到的挑戰是 [描述挑戰]。\n你能幫我想想有什麼方向可以處理嗎？",
+        editHint:"把 [ ] 的部分換成你真實的情況再貼進 Claude",
+        claudeUrl:"https://claude.ai/new"
+      },
+      {
+        id:"q03", name:"拿到更好的結果", xp:120, type:"practice",
+        concept:"提示寫作的四個槓桿：① 角色與情境 ② 具體任務 ③ 限制條件（長度、語氣、格式）④ 參考範例。這關直接練：把一個模糊 prompt 升級成有力的版本。",
+        mission:"先把下面的弱 prompt 貼進 Claude，看它回什麼；再用升級版再試一次，比較差距。",
+        promptTemplate:"【弱版 — 先貼這個】\n幫我寫摘要。\n\n---\n\n【升級版 — 再貼這個】\n我是產品經理，要向非技術背景的主管匯報。\n請把以下技術說明改寫成三句話的摘要，語氣正式但易懂，不要出現任何技術術語。\n\n[把你要摘要的文字貼在這裡]",
+        editHint:"把升級版最後一行換成你真實想摘要的內容",
+        claudeUrl:"https://claude.ai/new"
+      },
+      {
+        id:"q04", name:"桌面版：Chat / Cowork / Code", xp:80, type:"quiz",
+        concept:"Claude 桌面 App 有三種工作面：Chat（一般對話）、Cowork（給非工程師的代理式知識工作流程）、Code（命令列代理式寫程式）。同一個 Claude，三種入口。",
+        q:"你是非工程師，想讓 Claude 幫你自動跑一串桌面知識工作流程，該用哪個？",
+        opts:[
+          {t:"Claude Code", ok:false, fb:"那是給開發者的命令列工具。"},
+          {t:"Claude Cowork", ok:true, fb:"對——Cowork 就是給非工程師的代理式知識工作入口。"},
+          {t:"只能用網頁版 Chat", ok:false, fb:"桌面 App 有專門的 Cowork 模式。"}
+        ]
+      }
+    ]
+  },
+  {
+    title:"整理你的工作與知識",
+    quests:[
+      {
+        id:"q05", name:"Projects 入門", xp:90, type:"practice",
+        concept:"Project 是帶記憶的工作空間：背景資料、檔案、慣用指令放進去，之後每次對話都自帶這些脈絡。適合反覆進行的同類工作，不必每次重講。",
+        mission:"去 Claude 開一個新的 Project，幫它取名、寫三句自定義指令，讓 Claude 每次都知道你是誰、習慣怎麼工作。",
+        promptTemplate:"幫我設計一個 Claude Project 的自定義指令。\n\n我的工作：[你的職位與主要工作]\n我的習慣：[例如：喜歡條列式、回應要簡短、用繁體中文]\n這個 Project 主要用來：[例如：整理每週週報、寫客戶提案]\n\n請寫出三句適合放進 Project 指令的說明。",
+        editHint:"換成你真實情況，讓 Claude 幫你生成 Project 指令，再貼回你的 Project 設定",
+        claudeUrl:"https://claude.ai/new"
+      },
+      {
+        id:"q06", name:"用 Artifacts 創作", xp:100, type:"practice",
+        concept:"Artifact 是 Claude 產出的獨立成品——文件、網頁、程式、圖表——顯示在對話旁邊，可以直接預覽、下載、反覆迭代。你現在看的這個頁面本身就是一個 artifact。",
+        mission:"請 Claude 幫你做一個真的能用的小工具或模板，用 artifact 輸出。",
+        promptTemplate:"請用 artifact 幫我做一個 [選一個：HTML 計算機 / Markdown 週報模板 / 待辦清單網頁]。\n\n需求：\n- [描述你希望它有什麼功能]\n- [你的使用情境]\n\n輸出成可以直接使用的完整格式。",
+        editHint:"把 [ ] 換成你真正想要的工具，越具體越好",
+        claudeUrl:"https://claude.ai/new"
+      },
+      {
+        id:"q07", name:"使用 Skills", xp:90, type:"quiz",
+        concept:"Skill 是一包「最佳做法 + 指令」，讓 Claude 在特定任務上表現更穩——例如處理 Word、PPT、PDF。把它想成 Claude 的專業外掛：遇到對應任務會自動套用。",
+        q:"Skill 最貼切的比喻是？",
+        opts:[
+          {t:"另一個獨立的聊天機器人", ok:false, fb:"不是——Skill 是能力包，不是另一個 bot。"},
+          {t:"針對特定任務、可重複套用的專業做法包", ok:true, fb:"對——像 Claude 的專業外掛，遇到對的任務自動觸發。"},
+          {t:"一種需要另外購買的付費方案", ok:false, fb:"跟方案無關，是使用方式的設定。"}
+        ]
+      }
+    ]
+  },
+  {
+    title:"擴展 Claude 的觸角",
+    quests:[
+      {
+        id:"q08", name:"連接你的工具", xp:90, type:"quiz",
+        concept:"透過連接器（connector），Claude 能接上行事曆、信箱、檔案、券商等外部服務，直接讀資料、執行動作。但涉及對外動作時，它一定會先跟你確認。",
+        q:"連上信箱連接器後，Claude 要替你寄信前通常會？",
+        opts:[
+          {t:"直接寄出，不需要確認", ok:false, fb:"對外、不可逆的動作一定會先問你。"},
+          {t:"先給你看內容，你確認後才送出", ok:true, fb:"對——涉及對外動作時會先徵得你的同意。"},
+          {t:"完全沒辦法寄信", ok:false, fb:"接上連接器後是可以的，只是需要你確認。"}
+        ]
+      },
+      {
+        id:"q09", name:"Research 深度研究模式", xp:110, type:"practice",
+        concept:"Research 模式會自己規劃、跨多個來源搜尋、整合成一份有引用的完整報告。不是問一個問題拿一個答案，而是讓 Claude 幫你做完整的研究流程。",
+        mission:"給 Claude 一個你真的想了解的主題，讓它用 Research 模式做出完整報告。",
+        promptTemplate:"請用 Research 模式深入研究以下主題，整理成有引用來源的完整報告：\n\n主題：[你想研究的題目]\n\n我特別想了解：\n1. [面向一]\n2. [面向二]\n3. [面向三]\n\n請附上資料來源，最後給出你的綜合建議或結論。",
+        editHint:"換成你真正想研究的主題，Research 模式會花幾分鐘但結果很紮實",
+        claudeUrl:"https://claude.ai/new"
+      }
+    ]
+  },
+  {
+    title:"整合應用",
+    quests:[
+      {
+        id:"q10", name:"你的職位，你的用法", xp:100, type:"practice",
+        concept:"同一套能力，不同角色玩法不同。關鍵是把你真實的工作流程拆給 Claude——越貼近日常，越能找到槓桿點。",
+        mission:"用你自己真實的一項日常工作請 Claude 協助，完整跑一遍從交代任務到拿到成果的流程。",
+        promptTemplate:"我是 [你的職位]。\n\n我現在需要做的事：[描述一個具體的日常任務]\n\n背景說明：[提供相關脈絡]\n\n我需要的輸出形式：[例如：條列清單 / 草稿 / 分析報告 / 行動建議]\n\n請開始幫我處理。",
+        editHint:"把你最花時間的那項工作填進去——這一關最重要",
+        claudeUrl:"https://claude.ai/new"
+      },
+      {
+        id:"q11", name:"API 與其他使用方式", xp:80, type:"quiz",
+        concept:"除了網頁與 App，Claude 還能透過 API 嵌進你自己的產品裡。你自己打造的東西可以直接內建 Claude 的能力。",
+        q:"想把 Claude 的能力做進你自己的 App 裡，要用什麼？",
+        opts:[
+          {t:"只能用 claude.ai 官方網頁", ok:false, fb:"API 正是為讓你把 Claude 做進自己產品而存在。"},
+          {t:"Anthropic API", ok:true, fb:"對——API 讓 Claude 變成你產品的一部分。"},
+          {t:"沒有辦法做到", ok:false, fb:"完全做得到，很多 AI 產品都是這樣建的。"}
+        ]
+      }
+    ]
+  },
+  {
+    title:"結業",
+    quests:[
+      {
+        id:"q12", name:"建立你的第一個真實工作流", xp:100, type:"practice",
+        concept:"學習真正發生在你開始用它做事的那一刻。這一關不是練習——是把你學到的全部變成一個你每週都會用的真實流程。",
+        mission:"選一件你每週都要做的工作，用 Claude 完整跑一遍，然後把這個流程存進一個 Project，以後直接用。",
+        promptTemplate:"我每週都需要做的事：[描述你的週期性工作]\n\n請幫我：\n1. 把這個工作拆成清楚的步驟\n2. 為每個步驟寫一個可以直接用的 prompt\n3. 建議我應該在 Project 的自定義指令裡寫什麼，讓你每次都準備好\n\n目標是讓我以後每週只要打開 Project 就能開工。",
+        editHint:"填你真實的週期性工作——跑完這一關你就有一個真的能用的 Claude 工作流了",
+        claudeUrl:"https://claude.ai/new"
+      }
+    ]
+  }
+];
+
+// ─── 狀態 ───
+const ALL = CHAPTERS.flatMap(c => c.quests);
+const TOTAL_XP = ALL.reduce((s,q) => s + q.xp, 0);
+let state = { done:{}, xp:0 };
+const LEVELS = [[0,"學徒"],[280,"操作員"],[560,"熟手"],[840,"高手"],[TOTAL_XP,"主理人"]];
+function levelName(xp){ let n="學徒"; for(const[t,name] of LEVELS) if(xp>=t) n=name; return n; }
+
+// ─── 儲存 ───
+async function loadState(){
+  try{
+    const r = await window.storage.get("claude101v2");
+    if(r && r.value) state = JSON.parse(r.value);
+  }catch(e){ try{ const l=localStorage.getItem("claude101v2"); if(l) state=JSON.parse(l); }catch(e2){} }
+}
+async function saveState(){
+  const s = JSON.stringify(state);
+  try{ await window.storage.set("claude101v2", s); }catch(e){}
+  try{ localStorage.setItem("claude101v2", s); }catch(e){}
+}
+
+// ─── 渲染 ───
+function render(){
+  const map = document.getElementById('map');
+  map.innerHTML = '';
+  let globalIdx = 0;
+  CHAPTERS.forEach((ch, ci) => {
+    const total = ch.quests.length;
+    const done  = ch.quests.filter(q => state.done[q.id]).length;
+    const sec = document.createElement('div');
+    sec.className = 'chapter';
+    sec.innerHTML = `<div class="ch-head">
+      <span class="ch-num">${String(ci+1).padStart(2,'0')}</span>
+      <span class="ch-title">${ch.title}</span>
+      <span class="ch-prog">${done}/${total}</span>
+    </div>`;
+    ch.quests.forEach(q => {
+      globalIdx++;
+      const el = buildQuest(q, globalIdx);
+      sec.appendChild(el);
+    });
+    map.appendChild(sec);
+  });
+  updateHud();
+  applyLocks();
+}
+
+function buildQuest(q, idx){
+  const isDone = !!state.done[q.id];
+  const el = document.createElement('div');
+  el.className = 'quest' + (isDone ? ' done' : '');
+  el.id = 'el-' + q.id;
+
+  let bodyHtml = `<div class="q-inner"><p class="lead">${q.concept}</p>`;
+
+  if(q.type === 'quiz'){
+    bodyHtml += `<span class="tag">情境題</span>
+      <p style="font-size:14.5px;font-weight:600;margin-bottom:12px">${q.q}</p>
+      <div class="choices">
+        ${q.opts.map((o,i)=>`<button class="choice" data-qi="${i}">${o.t}</button>`).join('')}
+      </div>
+      <div class="feedback"></div>`;
+  } else {
+    // 組導流 URL（帶入預設 prompt）
+    const encoded = encodeURIComponent(q.promptTemplate);
+    const url = `${q.claudeUrl}?q=${encoded}`;
+    bodyHtml += `
+      <div class="mission-box">
+        <div class="m-label">任務</div>
+        <p>${q.mission}</p>
+      </div>
+      <div class="prompt-section">
+        <div class="prompt-label">預設 Prompt（可自行調整）</div>
+        <div class="prompt-template" id="pt-${q.id}">${escHtml(q.promptTemplate)}</div>
+        <p class="hint">💡 ${q.editHint}</p>
+        <a class="go-btn" href="${url}" target="_blank" rel="noopener">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          在 Claude 練習這一關
+        </a>
+        <p class="go-note">點擊後會開新分頁，前往你的 claude.ai 並帶入上方 prompt。<br>完成後回到這裡點「完成，解鎖下一關」。</p>
+      </div>`;
+  }
+
+  bodyHtml += `<button class="complete-btn" id="cb-${q.id}">${isDone ? '✓ 已完成' : '完成，解鎖下一關 →'}</button></div>`;
+
+  el.innerHTML = `
+    <div class="q-head">
+      <div class="q-dot">${isDone ? '✓' : idx}</div>
+      <div class="q-name">${q.name}</div>
+      <div class="q-xp">+${q.xp} XP</div>
+      <div class="q-caret">▶</div>
+    </div>
+    <div class="q-body">${bodyHtml}</div>`;
+
+  // 事件
+  el.querySelector('.q-head').addEventListener('click', () => {
+    if(el.classList.contains('locked')){ showToast('先完成上一關才能解鎖 🔒'); return; }
+    el.classList.toggle('open');
+  });
+  if(q.type === 'quiz'){
+    const fb = el.querySelector('.feedback');
+    el.querySelectorAll('.choice').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if(el.querySelector('.choice.correct')) return; // 已答對，不再換
+        const o = q.opts[+btn.dataset.qi];
+        el.querySelectorAll('.choice').forEach(b => b.classList.remove('correct','wrong'));
+        btn.classList.add(o.ok ? 'correct' : 'wrong');
+        fb.textContent = o.fb;
+      });
+    });
+  }
+  el.querySelector(`#cb-${q.id}`).addEventListener('click', () => complete(q));
+  return el;
+}
+
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function complete(q){
+  if(state.done[q.id]) return;
+  const prevLvl = levelName(state.xp);
+  state.done[q.id] = true;
+  state.xp = Math.min(TOTAL_XP, state.xp + q.xp);
+  saveState();
+  const newLvl = levelName(state.xp);
+  showToast(`+${q.xp} XP` + (prevLvl !== newLvl ? `  ・  升級為「${newLvl}」🎉` : ''));
+  render();
+  // 重開這一關 & 自動打開下一關
+  const next = ALL[ALL.findIndex(x => x.id === q.id) + 1];
+  if(next){
+    setTimeout(() => {
+      const el = document.getElementById('el-' + next.id);
+      if(el){ el.classList.add('open'); el.scrollIntoView({behavior:'smooth', block:'center'}); }
+    }, 400);
+  } else {
+    setTimeout(() => document.querySelector('.trophy').scrollIntoView({behavior:'smooth'}), 400);
+  }
+}
+
+function applyLocks(){
+  let prevDone = true;
+  ALL.forEach((q, i) => {
+    const el = document.getElementById('el-' + q.id);
+    if(!el) return;
+    const isDone = !!state.done[q.id];
+    const locked = i > 0 && !prevDone && !isDone;
+    el.classList.toggle('locked', locked);
+    prevDone = prevDone && isDone;
+  });
+}
+
+function updateHud(){
+  const pct = Math.round(state.xp / TOTAL_XP * 100);
+  document.getElementById('bar').style.width = pct + '%';
+  document.getElementById('xp-label').textContent = state.xp + ' XP';
+  document.getElementById('lvl-label').textContent = levelName(state.xp);
+  const allDone = ALL.every(q => state.done[q.id]);
+  if(allDone){
+    document.getElementById('trophy-title').textContent = '🏅 主理人徽章已解鎖，恭喜！';
+    document.getElementById('trophy-sub').textContent =
+      '十二關全部完成。點下方按鈕前往 Anthropic 官方課程，免費領取你的正式完課證書。';
+    document.getElementById('official-link-wrap').style.display = 'block';
+  }
+}
+
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function resetAll(){
+  if(!confirm('確定要清除所有進度？')) return;
+  state = { done:{}, xp:0 };
+  saveState(); render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ─── 啟動 ───
+(async () => { await loadState(); render(); })();
+</script>
+</body>
+</html>
