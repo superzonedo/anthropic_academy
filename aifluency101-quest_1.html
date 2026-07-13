@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AI Fluency: Framework &amp; Foundations ・ 任務手冊</title>
+<style>
+:root{
+  --ink:#181114;--ink-2:#22181c;--line:#3a2830;
+  --paper:#f0e2e6;--paper-dim:#a18990;
+  --rose:#cf6e91;--rose-soft:#e295ae;
+  --gold:#c9a267;--green:#7fa66a;
+  --serif:"Iowan Old Style","Palatino Linotype",Charter,Georgia,"Songti TC","Noto Serif TC",serif;
+  --sans:-apple-system,"PingFang TC","Noto Sans TC","Helvetica Neue",sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--ink);color:var(--paper);font-family:var(--sans);line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(circle at 78% -10%,rgba(207,110,145,.09),transparent 45%);
+  min-height:100vh;}
+.wrap{max-width:820px;margin:0 auto;padding:0 22px}
+
+/* HUD */
+header.hud{position:sticky;top:0;z-index:30;background:rgba(24,17,20,.9);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+.hud-row{display:flex;align-items:center;gap:14px;padding:13px 0}
+.brand{font-family:var(--serif);font-size:17px;letter-spacing:.2px;white-space:nowrap}
+.brand b{color:var(--rose);font-weight:600}
+.bar-wrap{flex:1;height:7px;background:var(--ink-2);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.bar{height:100%;width:0;background:linear-gradient(90deg,var(--rose),var(--gold));transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.xp{font-family:var(--mono);font-size:12.5px;color:var(--gold);white-space:nowrap}
+.lvl{font-family:var(--mono);font-size:11px;color:var(--paper-dim);white-space:nowrap}
+
+/* Hero */
+.hero{padding:60px 0 36px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--rose);margin-bottom:18px}
+h1{font-family:var(--serif);font-size:clamp(34px,7.6vw,58px);line-height:1.05;font-weight:600;letter-spacing:-1px}
+h1 .sub{display:block;font-size:clamp(14px,2.5vw,18px);font-weight:400;color:var(--paper-dim);
+  font-family:var(--sans);letter-spacing:0;margin-top:16px;line-height:1.65;max-width:560px}
+.hero-meta{display:flex;gap:24px;margin-top:24px;flex-wrap:wrap}
+.hero-meta div{font-family:var(--mono);font-size:12px;color:var(--paper-dim)}
+.hero-meta b{color:var(--paper);font-weight:600}
+.prereq{margin-top:20px;background:rgba(207,110,145,.08);border:1px solid rgba(207,110,145,.22);
+  border-radius:10px;padding:14px 16px;font-size:13px;color:var(--paper-dim);line-height:1.7}
+.prereq b{color:var(--rose-soft);font-weight:600}
+.start-btn{margin-top:26px;background:var(--rose);color:#1a0d12;border:none;font-family:var(--sans);
+  font-weight:700;font-size:15px;padding:13px 26px;border-radius:10px;cursor:pointer;
+  transition:transform .15s,background .2s}
+.start-btn:hover{background:var(--rose-soft);transform:translateY(-1px)}
+
+/* Chapter / quest */
+.map{padding:38px 0 80px}
+.chapter{margin-bottom:36px}
+.ch-head{display:flex;align-items:baseline;gap:14px;margin-bottom:16px;
+  padding-bottom:10px;border-bottom:1px solid var(--line)}
+.ch-num{font-family:var(--mono);font-size:13px;color:var(--rose)}
+.ch-title{font-family:var(--serif);font-size:22px;font-weight:600}
+.ch-prog{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--paper-dim)}
+
+.quest{border:1px solid var(--line);border-radius:14px;background:var(--ink-2);
+  margin-bottom:14px;overflow:hidden;transition:border-color .2s}
+.quest.done{border-color:rgba(127,166,106,.45)}
+.quest.locked{opacity:.42;pointer-events:none}
+.q-head{display:flex;align-items:center;gap:14px;padding:17px 19px;cursor:pointer;user-select:none}
+.q-dot{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);flex-shrink:0;
+  display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--paper-dim)}
+.quest.done .q-dot{background:var(--green);border-color:var(--green);color:#12160f;font-size:14px}
+.q-name{font-weight:600;font-size:15px;flex:1}
+.q-xp{font-family:var(--mono);font-size:11.5px;color:var(--gold)}
+.q-caret{color:var(--paper-dim);transition:transform .25s;font-size:12px}
+.quest.open .q-caret{transform:rotate(90deg)}
+.q-body{max-height:0;overflow:hidden;transition:max-height .38s ease}
+.quest.open .q-body{max-height:1800px}
+.q-inner{padding:6px 19px 22px;border-top:1px solid var(--line)}
+.q-inner .lead{color:var(--paper-dim);font-size:13.5px;margin:14px 0;line-height:1.75}
+.tag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:1px;
+  text-transform:uppercase;border:1px solid var(--line);border-radius:6px;padding:3px 9px;margin:14px 0 4px}
+.tag.quiz{color:var(--rose-soft);border-color:rgba(207,110,145,.32)}
+.tag.practice{color:var(--gold);border-color:rgba(201,162,103,.32)}
+
+/* Quiz */
+.choices{display:flex;flex-direction:column;gap:9px;margin:14px 0}
+.choice{text-align:left;background:var(--ink);border:1px solid var(--line);color:var(--paper);
+  padding:12px 15px;border-radius:9px;cursor:pointer;font-family:var(--sans);font-size:14px;transition:all .15s}
+.choice:hover{border-color:var(--rose)}
+.choice.correct{border-color:var(--green);background:rgba(127,166,106,.12);color:#b8e0a8}
+.choice.wrong{border-color:#a85a4a;background:rgba(168,90,74,.12);color:#e0a898}
+.feedback{font-size:13.5px;color:var(--paper-dim);margin-top:10px;min-height:1.4em;line-height:1.6}
+
+/* Practice */
+.mission-box{background:rgba(207,110,145,.07);border:1px solid rgba(207,110,145,.26);
+  border-radius:10px;padding:16px 18px;margin:14px 0}
+.m-label{font-family:var(--mono);font-size:10.5px;letter-spacing:2px;color:var(--rose-soft);
+  text-transform:uppercase;margin-bottom:8px}
+.mission-box p{font-size:14px;color:var(--paper);line-height:1.7}
+.prompt-label{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;color:var(--paper-dim);
+  text-transform:uppercase;margin:14px 0 7px}
+.prompt-template{background:var(--ink);border:1px solid var(--line);border-radius:9px;
+  padding:13px 15px;font-family:var(--mono);font-size:13px;line-height:1.7;
+  color:var(--paper-dim);white-space:pre-wrap;margin-bottom:10px}
+.hint{font-size:12.5px;color:var(--paper-dim);margin:6px 0 12px;line-height:1.6}
+.go-btn{display:inline-flex;align-items:center;gap:9px;background:var(--rose);color:#1a0d12;
+  border:none;font-family:var(--sans);font-weight:600;font-size:14px;padding:11px 20px;
+  border-radius:9px;cursor:pointer;text-decoration:none;transition:background .2s,transform .15s}
+.go-btn:hover{background:var(--rose-soft);transform:translateY(-1px)}
+.go-note{font-size:12px;color:var(--paper-dim);margin-top:9px;line-height:1.6}
+
+/* Complete btn */
+.complete-btn{margin-top:18px;width:100%;background:var(--ink);border:1px solid var(--line);
+  color:var(--paper-dim);font-family:var(--sans);font-weight:600;font-size:13.5px;
+  padding:12px;border-radius:9px;cursor:pointer;transition:all .2s}
+.complete-btn:hover{border-color:var(--green);color:var(--green)}
+.quest.done .complete-btn{border-color:rgba(127,166,106,.4);color:var(--green);
+  background:rgba(127,166,106,.07);cursor:default}
+
+/* Trophy */
+.trophy{padding:40px 0 60px;text-align:center;border-top:1px solid var(--line)}
+.trophy h2{font-family:var(--serif);font-size:27px;margin-bottom:10px}
+.trophy p{color:var(--paper-dim);font-size:14px;max-width:500px;margin:0 auto;line-height:1.75}
+.official-cta{display:inline-flex;align-items:center;gap:9px;margin-top:22px;
+  background:none;border:1px solid var(--rose);color:var(--rose-soft);
+  font-family:var(--sans);font-weight:600;font-size:14px;padding:12px 22px;
+  border-radius:10px;text-decoration:none;transition:all .2s}
+.official-cta:hover{background:rgba(207,110,145,.1);transform:translateY(-1px)}
+.reset{margin-top:22px;display:block;background:none;border:none;color:var(--paper-dim);
+  font-family:var(--mono);font-size:12px;cursor:pointer;text-decoration:underline;
+  text-underline-offset:3px;margin-left:auto;margin-right:auto}
+.reset:hover{color:var(--rose)}
+
+/* Footer */
+.site-footer{border-top:1px solid var(--line);padding:36px 0 48px}
+.footer-inner{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.footer-brand{font-family:var(--serif);font-size:16px}
+.footer-brand b{color:var(--rose);font-weight:600}
+.footer-links a{color:var(--paper-dim);font-family:var(--mono);font-size:12px;
+  text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--rose)}
+.footer-divider{width:32px;height:1px;background:var(--line)}
+.footer-copy{font-family:var(--mono);font-size:11px;color:var(--paper-dim);line-height:1.75}
+.footer-copy a{color:var(--paper-dim);text-decoration:underline;text-underline-offset:3px}
+.footer-copy a:hover{color:var(--rose)}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--rose);color:#1a0d12;font-weight:700;padding:11px 22px;border-radius:10px;
+  font-size:14px;opacity:0;transition:all .35s;z-index:50;box-shadow:0 8px 28px rgba(0,0,0,.5)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+</style>
+</head>
+<body>
+
+<header class="hud">
+  <div class="wrap hud-row">
+    <div class="brand">AI Fluency ・ <b>任務手冊</b></div>
+    <div class="bar-wrap"><div class="bar" id="bar"></div></div>
+    <div class="xp" id="xp-label">0 XP</div>
+    <div class="lvl" id="lvl-label">初心者</div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">官方課程 ・ 任務化改裝版</div>
+    <h1>學會跟 AI 一起工作
+      <span class="sub">不是看完影片,是接十三個任務。用 4D 框架——委派、描述、判斷、盡責——練出真正的協作素養。</span>
+    </h1>
+    <div class="hero-meta">
+      <div>關卡 <b>13</b></div>
+      <div>章節 <b>10</b></div>
+      <div>滿級 <b>1250 XP</b></div>
+      <div>需要 <b>claude.ai 帳號</b></div>
+    </div>
+    <div class="prereq">
+      <b>關於這門課</b> ・ 改編自 Anthropic 攜手 University College Cork 的 Joseph Feller 教授與 Ringling College 的 Rick Dakan 教授共同打造的 AI Fluency 課程,核心是 4D 框架:Delegation(委派)、Description(描述)、Discernment(判斷)、Diligence(盡責)。
+    </div>
+    <button class="start-btn" onclick="document.getElementById('map').scrollIntoView({behavior:'smooth'})">
+      開始第一關 →
+    </button>
+  </section>
+
+  <section class="map" id="map"></section>
+
+  <section class="trophy">
+    <h2 id="trophy-title">完成全部任務即可領取 AI 通達者徽章 🌸</h2>
+    <p id="trophy-sub">4D 框架不是背下來的知識,是你跟 AI 一起做過才練出來的判斷力。</p>
+    <div id="official-link-wrap" style="display:none;margin-top:8px">
+      <a class="official-cta" href="https://anthropic-partners.skilljar.com/ai-fluency-framework-foundations" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        前往 Anthropic 官方課程領取正式證書
+      </a>
+      <p style="font-size:12px;color:var(--paper-dim);margin-top:10px">
+        anthropic-partners.skilljar.com ・ 免費・官方英文原版
+      </p>
+    </div>
+    <button class="reset" onclick="resetAll()">重置所有進度</button>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">超中毒 ・ <b>AI Fluency 任務手冊</b></div>
+    <div class="footer-links">
+      <a href="https://www.threads.net/@oiiax88" target="_blank" rel="noopener">Threads @oiiax88</a>
+    </div>
+    <div class="footer-divider"></div>
+    <p class="footer-copy">
+      © 2026 超中毒｜本任務手冊由 <a href="https://www.threads.net/@oiiax88" target="_blank" rel="noopener">@oiiax88</a> 製作,版權所有,未經授權不得轉載或再製。<br>
+      課程內容改編自 <a href="https://anthropic-partners.skilljar.com/ai-fluency-framework-foundations" target="_blank" rel="noopener">Anthropic 官方 AI Fluency: Framework &amp; Foundations</a>,僅供個人學習參考。<br>
+      Claude 為 Anthropic PBC 之商標。
+    </p>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CHAPTERS = [
+  {
+    title:"認識 AI Fluency",
+    quests:[
+      {
+        id:"q01", name:"什麼是 AI Fluency？", xp:80, type:"quiz",
+        concept:"AI Fluency 課程由 Anthropic 攜手 University College Cork 的 Joseph Feller 教授與 Ringling College 的 Rick Dakan 教授共同打造,目標不是教你背功能鍵,而是教你有效、高效、合乎倫理且安全地跟 AI 協作。",
+        q:"AI Fluency 課程主要想教你的是？",
+        opts:[
+          {t:"把 Claude 的所有功能鍵都背起來", ok:false, fb:"這只是操作層面,AI Fluency 談的是協作素養。"},
+          {t:"有效、高效、合乎倫理且安全地與 AI 協作的能力", ok:true, fb:"沒錯,這正是課程的核心目標。"},
+          {t:"寫程式讓 AI 自動完成你所有的工作", ok:false, fb:"那是自動化,跟 AI Fluency 談的協作素養不是同一件事。"}
+        ]
+      }
+    ]
+  },
+  {
+    title:"AI Fluency 框架",
+    quests:[
+      {
+        id:"q02", name:"為什麼需要 AI Fluency？", xp:80, type:"quiz",
+        concept:"生成式 AI 普及之後,單純「會用工具」已經不夠——真正拉開差距的是判斷力:什麼任務該交給 AI、什麼該自己做、怎麼描述才有效、怎麼檢查產出。這正是 AI Fluency 存在的理由。",
+        q:"為什麼「會用 AI 工具」跟「具備 AI Fluency」不一樣？",
+        opts:[
+          {t:"工具會用就夠了,不需要額外的素養", ok:false, fb:"操作只是入門,判斷力才是真正的差異所在。"},
+          {t:"AI Fluency 更著重判斷力——何時委派、如何描述、如何檢查", ok:true, fb:"對,這就是課程一直強調的核心能力。"},
+          {t:"AI Fluency 只是進階版的快捷鍵教學", ok:false, fb:"不是操作技巧,而是協作決策的能力。"}
+        ]
+      },
+      {
+        id:"q03", name:"4D 框架", xp:100, type:"quiz",
+        concept:"4D 框架是這門課的核心骨架:Delegation(委派)決定什麼任務該交給 AI、Description(描述)決定怎麼把任務講清楚、Discernment(判斷)決定怎麼評估 AI 的產出、Diligence(盡責)決定你要為結果負多少責任與把關。四者環環相扣,缺一不可。",
+        q:"4D 框架的四個字母各自代表？",
+        opts:[
+          {t:"Delegation、Description、Discernment、Diligence", ok:true, fb:"完全正確,這四個詞就是接下來每一章的主題。"},
+          {t:"Design、Development、Deployment、Debugging", ok:false, fb:"這是軟體開發的流程,不是 AI Fluency 的框架。"},
+          {t:"Data、Decision、Direction、Discipline", ok:false, fb:"聽起來很像,但不是官方定義的四個詞。"}
+        ]
+      }
+    ]
+  },
+  {
+    title:"深潛一：什麼是生成式 AI？",
+    quests:[
+      {
+        id:"q04", name:"生成式 AI 基礎", xp:80, type:"quiz",
+        concept:"生成式 AI(如 Claude)透過在大量文字資料上訓練,學會預測「接下來最可能出現的內容」,並依此即時生成連貫的回應。它不是查表工具——這也是為什麼同樣的問題問兩次,答案可能略有不同。",
+        q:"生成式 AI 產生回應的基本原理最接近？",
+        opts:[
+          {t:"從固定資料庫裡查表格,然後貼上現成答案", ok:false, fb:"那是傳統資料庫查詢,生成式 AI 是即時生成內容。"},
+          {t:"根據訓練學到的模式,即時預測並生成最合理的內容", ok:true, fb:"對,這也是為什麼同一個問題問兩次可能得到不完全相同的答案。"},
+          {t:"直接連上網路把現成答案抓回來給你", ok:false, fb:"不是搜尋引擎行為,是生成式的內容產出。"}
+        ]
+      },
+      {
+        id:"q05", name:"能力與限制", xp:90, type:"quiz",
+        concept:"Claude 這類模型能做的事很廣——寫作、分析、程式、對話推理,但也有限制:可能產生看似合理卻錯誤的內容、對非常新的事件所知有限、沒有記憶功能時無法真的記得上次對話。了解限制,才知道哪裡需要你親自把關。",
+        q:"以下哪一項是 AI 模型常見的限制？",
+        opts:[
+          {t:"可能生成看似合理但實際錯誤的內容", ok:true, fb:"對,這就是為什麼判斷與查核永遠不能省略。"},
+          {t:"完全不會出錯,任何輸出都可以直接採用", ok:false, fb:"正好相反,這正是這門課要提醒你的風險。"},
+          {t:"只能處理程式相關的任務", ok:false, fb:"它的應用範圍遠不只程式,寫作、分析、對話都涵蓋在內。"}
+        ]
+      }
+    ]
+  },
+  {
+    title:"委派 Delegation",
+    quests:[
+      {
+        id:"q06", name:"深入認識委派", xp:90, type:"quiz",
+        concept:"委派不是「把工作全部丟給 AI」,而是判斷:這項任務適不適合交給 AI?交出去之後,哪一部分還是要我自己來?好的委派決策會考慮任務的風險、複雜度,以及 AI 在該類任務上的實際能力。",
+        q:"「委派」在 4D 框架裡指的是？",
+        opts:[
+          {t:"把所有工作都丟給 AI,自己完全不管", ok:false, fb:"這樣做風險很高,委派需要判斷,不是全權放手。"},
+          {t:"判斷哪些任務適合交給 AI、哪些該自己保留", ok:true, fb:"對,這就是委派決策的核心。"},
+          {t:"只能委派給資深同事,不能給 AI", ok:false, fb:"這裡的委派指的正是你跟 AI 之間的分工。"}
+        ]
+      },
+      {
+        id:"q07", name:"專案規劃與委派", xp:110, type:"practice",
+        concept:"面對一個專案時,先拆解成小任務,再逐一判斷「這塊適合委派給 AI 嗎」。委派前先想清楚:你要的產出格式、可接受的風險程度、需要人工複核的地方。",
+        mission:"挑一個你手邊真實的專案,請 Claude 幫你拆解成任務清單,並針對每一項任務標註「適合委派」或「建議自己處理」及原因。",
+        promptTemplate:"我正在進行的專案是:[描述專案]\n\n請幫我把這個專案拆解成具體的任務清單,並針對每一項任務,標註它是否適合委派給 AI 處理,以及原因(考量風險、複雜度、需要的人味判斷)。",
+        editHint:"換成你真實的專案,這關的重點是練習委派判斷力,不是拿到現成答案",
+        claudeUrl:"https://claude.ai/new"
+      }
+    ]
+  },
+  {
+    title:"描述 Description",
+    quests:[
+      {
+        id:"q08", name:"深入認識描述", xp:90, type:"quiz",
+        concept:"描述的品質決定 AI 產出的品質。好的描述包含:情境(你是誰、為何需要)、明確任務、限制條件(長度、語氣、格式),以及理想情況下的範例。模糊的描述換來的往往是模糊的答案。",
+        q:"以下哪個描述最可能讓 AI 產出你要的結果？",
+        opts:[
+          {t:"「幫我寫一下」", ok:false, fb:"太模糊,AI 只能用猜的方式回應。"},
+          {t:"「我是 XX 職位,要向 XX 對象說明 XX,請用 XX 語氣、XX 長度呈現」", ok:true, fb:"對,具體的情境與限制條件讓產出更貼近你要的。"},
+          {t:"「隨便,你決定就好」", ok:false, fb:"沒有方向,AI 只能靠猜測填補空白。"}
+        ]
+      }
+    ]
+  },
+  {
+    title:"深潛二：有效提示技巧",
+    quests:[
+      {
+        id:"q09", name:"有效提示技巧", xp:110, type:"practice",
+        concept:"提示技巧的槓桿包括:給角色情境、拆解成步驟、要求 AI 先想清楚再回答、提供範例,以及明確說出「不要什麼」。這關直接練習:把一個模糊需求改寫成結構化提示。",
+        mission:"把一個你曾經覺得 AI 回答得不夠好的問題,重新用結構化方式描述,再貼進 Claude 比較前後差異。",
+        promptTemplate:"情境:我是 [角色]\n任務:[具體要做的事]\n限制:[長度/語氣/格式要求]\n請避免:[不想要的內容]\n\n[原本想問的問題放在這裡]",
+        editHint:"把 [ ] 換成真實內容,前後比較同一個問題在弱描述與強描述下的差異",
+        claudeUrl:"https://claude.ai/new"
+      }
+    ]
+  },
+  {
+    title:"判斷 Discernment",
+    quests:[
+      {
+        id:"q10", name:"深入認識判斷", xp:90, type:"quiz",
+        concept:"判斷力是指:面對 AI 給出的產出,你能不能看出哪裡可能有問題、哪裡需要查證、哪裡可以直接採用。判斷力越強,就越能安全地放大委派的範圍。",
+        q:"「判斷」在 4D 框架中主要指？",
+        opts:[
+          {t:"盲目相信 AI 的每一個輸出", ok:false, fb:"這正是判斷力想避免的風險。"},
+          {t:"評估 AI 產出的品質與可信度,決定要不要採用或修改", ok:true, fb:"對,判斷力越強,委派才能越安心地放大範圍。"},
+          {t:"只有工程師才需要具備的能力", ok:false, fb:"任何使用 AI 產出的人都需要這項能力。"}
+        ]
+      }
+    ]
+  },
+  {
+    title:"描述-判斷循環",
+    quests:[
+      {
+        id:"q11", name:"描述-判斷循環", xp:100, type:"quiz",
+        concept:"描述與判斷不是一次性動作,而是一個循環:描述 → 看產出 → 判斷哪裡不足 → 修正描述 → 再產出。越熟練這個循環,你跟 AI 協作的效率就越高。",
+        q:"「描述-判斷循環」想表達的核心概念是？",
+        opts:[
+          {t:"描述完就結束,不用再管產出", ok:false, fb:"實際上描述之後還需要判斷與修正,是一個循環。"},
+          {t:"描述與判斷會反覆進行,透過修正描述逐步逼近理想產出", ok:true, fb:"對,這正是這個循環的價值——越練越熟練。"},
+          {t:"判斷只需要做一次,之後都不用再檢查", ok:false, fb:"每一輪產出都值得重新判斷,不是一次性動作。"}
+        ]
+      }
+    ]
+  },
+  {
+    title:"盡責 Diligence",
+    quests:[
+      {
+        id:"q12", name:"深入認識盡責", xp:90, type:"quiz",
+        concept:"盡責談的是你對最終結果要負的責任與把關動作——事實查核、倫理考量、對受影響對象的責任感。AI 產出再好,最終為結果負責的還是使用的人。",
+        q:"「盡責」在 4D 框架裡強調的是？",
+        opts:[
+          {t:"AI 已經做完事,使用者不需要再負任何責任", ok:false, fb:"正好相反,最終責任始終在使用者身上。"},
+          {t:"使用者對最終產出仍需負責、把關與查核", ok:true, fb:"對,這就是盡責的核心——AI 產出之後,把關的動作不能省略。"},
+          {t:"只有公司的合規部門需要盡責", ok:false, fb:"每一個使用 AI 產出的人都需要這份責任感。"}
+        ]
+      }
+    ]
+  },
+  {
+    title:"結業",
+    quests:[
+      {
+        id:"q13", name:"建立你自己的 4D 工作流", xp:140, type:"practice",
+        concept:"這是整合關卡:把委派、描述、判斷、盡責四個能力串成一個你會真的重複使用的工作流程,並固定成一份可以存進 Project 的自定義指令。",
+        mission:"挑一項你每週都會做的任務,依序套用 4D 框架,和 Claude 一起把這個流程寫清楚,最後產出一份可以直接存進 Project 的操作指南。",
+        promptTemplate:"我每週都要做的任務是:[描述任務]\n\n請依照 4D 框架幫我規劃:\n1. Delegation:這個任務裡哪些部分適合委派給你,哪些我該自己做\n2. Description:幫我寫一個這個任務可重複使用的 prompt 範本\n3. Discernment:提醒我檢查產出時該注意哪些重點\n4. Diligence:提醒我在什麼情況下需要額外查證或把關\n\n最後幫我整理成一份可以存進 Project 自定義指令的完整說明。",
+        editHint:"填入你真實的週期性任務,跑完這關你就有一套完整的 4D 協作流程了",
+        claudeUrl:"https://claude.ai/new"
+      }
+    ]
+  }
+];
+
+const ALL = CHAPTERS.flatMap(c=>c.quests);
+const TOTAL_XP = ALL.reduce((s,q)=>s+q.xp,0);
+let state = {done:{},xp:0};
+const LEVELS = [[0,"初心者"],[300,"委派學徒"],[600,"描述工匠"],[900,"判斷行家"],[TOTAL_XP,"AI 通達者"]];
+function levelName(xp){let n=LEVELS[0][1];for(const[t,name]of LEVELS)if(xp>=t)n=name;return n;}
+
+async function loadState(){
+  try{const r=await window.storage.get("aifluency101");if(r&&r.value)state=JSON.parse(r.value);}
+  catch(e){try{const l=localStorage.getItem("aifluency101");if(l)state=JSON.parse(l);}catch(e2){}}
+}
+async function saveState(){
+  const s=JSON.stringify(state);
+  try{await window.storage.set("aifluency101",s);}catch(e){}
+  try{localStorage.setItem("aifluency101",s);}catch(e){}
+}
+
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function render(){
+  const map=document.getElementById('map');
+  map.innerHTML='';
+  let gi=0;
+  CHAPTERS.forEach((ch,ci)=>{
+    const total=ch.quests.length,done=ch.quests.filter(q=>state.done[q.id]).length;
+    const sec=document.createElement('div');sec.className='chapter';
+    sec.innerHTML=`<div class="ch-head">
+      <span class="ch-num">${String(ci+1).padStart(2,'0')}</span>
+      <span class="ch-title">${ch.title}</span>
+      <span class="ch-prog">${done}/${total}</span></div>`;
+    ch.quests.forEach(q=>{gi++;sec.appendChild(buildQuest(q,gi));});
+    map.appendChild(sec);
+  });
+  updateHud();applyLocks();
+}
+
+function buildQuest(q,idx){
+  const isDone=!!state.done[q.id];
+  const el=document.createElement('div');
+  el.className='quest'+(isDone?' done':'');
+  el.id='el-'+q.id;
+
+  let body='';
+
+  if(q.type==='quiz'){
+    body=`<span class="tag quiz">情境題</span>
+      <p style="font-size:14.5px;font-weight:600;margin:10px 0 12px">${q.q}</p>
+      <div class="choices">${q.opts.map((o,i)=>`<button class="choice" data-qi="${i}">${o.t}</button>`).join('')}</div>
+      <div class="feedback"></div>`;
+
+  } else if(q.type==='practice'){
+    const encoded=encodeURIComponent(q.promptTemplate);
+    const url=`${q.claudeUrl}?q=${encoded}`;
+    body=`<span class="tag practice">實作練習</span>
+      <div class="mission-box"><div class="m-label">任務</div><p>${q.mission}</p></div>
+      <div class="prompt-label">預設 Prompt(可自行調整)</div>
+      <div class="prompt-template">${escHtml(q.promptTemplate)}</div>
+      <p class="hint">💡 ${q.editHint}</p>
+      <a class="go-btn" href="${url}" target="_blank" rel="noopener">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        在 Claude 練習這一關
+      </a>
+      <p class="go-note">點擊後開新分頁,前往 claude.ai 並帶入 prompt。完成後回來點「完成」繼續。</p>`;
+  }
+
+  body+=`<button class="complete-btn" id="cb-${q.id}">${isDone?'✓ 已完成':'完成,解鎖下一關 →'}</button>`;
+
+  el.innerHTML=`
+    <div class="q-head">
+      <div class="q-dot">${isDone?'✓':idx}</div>
+      <div class="q-name">${q.name}</div>
+      <div class="q-xp">+${q.xp} XP</div>
+      <div class="q-caret">▶</div>
+    </div>
+    <div class="q-body"><div class="q-inner">
+      <p class="lead">${q.concept}</p>
+      ${body}
+    </div></div>`;
+
+  el.querySelector('.q-head').addEventListener('click',()=>{
+    if(el.classList.contains('locked')){showToast('先完成上一關才能解鎖 🔒');return;}
+    el.classList.toggle('open');
+  });
+  if(q.type==='quiz'){
+    const fb=el.querySelector('.feedback');
+    el.querySelectorAll('.choice').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        if(el.querySelector('.choice.correct'))return;
+        const o=q.opts[+btn.dataset.qi];
+        el.querySelectorAll('.choice').forEach(b=>b.classList.remove('correct','wrong'));
+        btn.classList.add(o.ok?'correct':'wrong');
+        fb.textContent=o.fb;
+      });
+    });
+  }
+  el.querySelector(`#cb-${q.id}`).addEventListener('click',()=>complete(q));
+  return el;
+}
+
+function complete(q){
+  if(state.done[q.id])return;
+  const prevLvl=levelName(state.xp);
+  state.done[q.id]=true;
+  state.xp=Math.min(TOTAL_XP,state.xp+q.xp);
+  saveState();
+  const newLvl=levelName(state.xp);
+  showToast(`+${q.xp} XP`+(prevLvl!==newLvl?`  ・  升級為「${newLvl}」🎉`:''));
+  render();
+  const next=ALL[ALL.findIndex(x=>x.id===q.id)+1];
+  if(next){
+    setTimeout(()=>{
+      const el=document.getElementById('el-'+next.id);
+      if(el){el.classList.add('open');el.scrollIntoView({behavior:'smooth',block:'center'});}
+    },400);
+  } else {
+    setTimeout(()=>document.querySelector('.trophy').scrollIntoView({behavior:'smooth'}),400);
+  }
+}
+
+function applyLocks(){
+  let prevDone=true;
+  ALL.forEach((q,i)=>{
+    const el=document.getElementById('el-'+q.id);if(!el)return;
+    const isDone=!!state.done[q.id];
+    el.classList.toggle('locked',i>0&&!prevDone&&!isDone);
+    prevDone=prevDone&&isDone;
+  });
+}
+
+function updateHud(){
+  const pct=Math.round(state.xp/TOTAL_XP*100);
+  document.getElementById('bar').style.width=pct+'%';
+  document.getElementById('xp-label').textContent=state.xp+' XP';
+  document.getElementById('lvl-label').textContent=levelName(state.xp);
+  if(ALL.every(q=>state.done[q.id])){
+    document.getElementById('trophy-title').textContent='🌸 AI 通達者徽章已解鎖,恭喜！';
+    document.getElementById('trophy-sub').textContent='十三關全部完成。點下方前往 Anthropic 官方課程領取正式證書。';
+    document.getElementById('official-link-wrap').style.display='block';
+  }
+}
+
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+function resetAll(){
+  if(!confirm('確定要清除所有進度？'))return;
+  state={done:{},xp:0};saveState();render();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+(async()=>{await loadState();render();})();
+</script>
+</body>
+</html>
